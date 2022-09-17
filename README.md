@@ -3,8 +3,6 @@
 
 ### CONTENTS OF THIS REPOSITORY
 ---------------------
-
-<p style='color:blue'>
   
  * Introduction
  * Slides
@@ -21,7 +19,7 @@
     * StateEd .Rmd
     * StateEd .R
  * Output Files
-</p>
+---------------------
 
 ### INTRODUCTION
 ---------------------
