@@ -12,12 +12,12 @@
    * National Center for Educational Statistics High School District Data
    * National Center for Educational Statistics National ACT Data
  * Code Files
-    * SC .Rmd
-    * SC .R
-    * GOTG .Rmd
-    * GOTG .R
-    * StateEd .Rmd
-    * StateEd .R
+    * Social Capital Markdown File (SC.Rmd)
+    * Social Capital Render Script (SC.R)
+    * Grads on the Go Markdown File (GOTG.Rmd)
+    * Grads on the Go Render Script (GOTG.R)
+    * State Education Markdown File (StateEd.Rmd)
+    * State Education Render Script (StateEd.R)
  * Output Files
 ---------------------
 
