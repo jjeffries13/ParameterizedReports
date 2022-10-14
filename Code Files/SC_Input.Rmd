@@ -1,0 +1,123 @@
+---
+title: "Social Capital Atlas Report"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params: 
+  NE_highschools: "68504"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(pacman)
+p_load("ggplot2", "geomtextpath", "dplyr", "readr", "stats", "prettydoc", "patchwork", install = T)
+
+SC_Data <- read_csv('/Users/jayjeffries/Desktop/R Resources/Parameterized Reporting/SC Example/social_capital_high_school.csv')
+
+# ---------------------------------------------------#
+# Filtering data by parameters
+# ---------------------------------------------------#
+
+SC_report_data <- SC_Data %>%
+  filter(zip == params$NE_highschools)
+
+# ---------------------------------------------------#
+# Labeling `r` objects for in-text use
+# ---------------------------------------------------#
+
+highschool_zip <- format(SC_report_data$zip, scientific = F, digits = 5)
+highschool_size <- SC_report_data$students_9_to_12
+highschool_name <- SC_report_data$high_school_name
+
+xavg <- mean(SC_Data$ec_high_parent_ses_hs, na.rm = T)
+yavg <- mean(SC_Data$volunteering_rate_hs, na.rm = T)
+volunteer <- round(SC_report_data$volunteering_rate_hs, 3) * 100
+
+# ---------------------------------------------------#
+# Creating column to indicate NE schools (1) and non-NE schools (0)
+# ---------------------------------------------------#
+
+SC_Data$color <- ifelse(SC_Data$zip >= 68001 & SC_Data$zip <= 69376, 1, 0)
+SC_Data$color <- factor(SC_Data$color, labels = c("Non-Nebraska School", "Nebraska School"))
+```
+# Summary
+
+|          This report derives from the Social Capital Atlas project developed in collaboration with *Meta*, *Opportunity Insights*, and researchers from Harvard, New York University, and Stanford ^[Chetty, R., Jackson, M. O., Kuchler, T., Stroebel, J., Hendren, N., Fluegge, R. B., Gong, S., Gonzalez, F., Grondin, A., Jacob, M., Johnston, D., Koenen, M., Laguna-Muggenburg, E., Mudekereza, F., Rutter, T., Thor, N., Townsend, W., Zhang, R., Bailey, M., … Wernerfelt, N. (2022). Social capital I: Measurement and associations with economic mobility. Nature, 608(7921), 108–121. https://doi.org/10.1038/s41586-022-04996-4]. These data are nested at the highschool level. Using 21 billion riendships found from publicly available *Facebook* account information and the National Center for Education Statistics (NCES) data, SES and identify social capital constructs in students were analyzed^[[Dataset](https://data.humdata.org/dataset/social-capital-atlas)]. Measured variables include:
+
+* Baseline measures of SES found by combining proxies for SES (e.g., median incomes in one’s residential ZIP code, cell phone model, college attended, etc.) observed on Facebook.
+* The constructs of connectedness, cohesiveness, and civic engagemennt^[[Social Capital Website](https://www.socialcapital.org/?dimension=EconomicConnectednessIndividual&dim1=EconomicConnectednessIndividual&dim2=CohesivenessClustering&dim3=CivicEngagementVolunteeringRates&geoLevel=hs&selectedId=317284001032)]. 
+
+> This document is in reference to _**`r highschool_name`**_ in the zip code `r highschool_zip`. 
+There are currently `r highschool_size` students enrolled at `r highschool_name`. 
+Of these students, `r volunteer`% of students volunteer. 
+
+```{r scatterplots, echo=FALSE, message = F, warning = F, fig.align = 'c', out.width= "90%"}
+# ---------------------------------------------------#
+# National data scatterplot of high parental SES & student volunteering rate
+# ---------------------------------------------------#
+
+ggplot(SC_Data |> arrange(color), 
+       aes(x = ec_high_parent_ses_hs, y = volunteering_rate_hs)) + 
+  geom_point(aes(color = factor(color), position = "jitter")) + 
+  scale_colour_manual(values = c("#02075d", "#2E5A88")) +
+  # scale_fill_manual(values = c("#000080", "lightblue")) +
+  labs(x = "Share of High Parental SES (%)", y = "Volunteering Rate of Students (%)") + 
+  geom_textvline(label = "National Average", xintercept = xavg, 
+                 linetype = "dotted", color = "darkgray", fontface = "bold", size = 5.5) +
+  geom_texthline(label = "National Average", yintercept = yavg, 
+                 linetype = "dotted", color = "darkgray", fontface = "bold", size = 5.5) +
+  ggtitle("Figure 1. Scatterplot of High Parental SES and Volunteering, National Data") +
+  guides(color = guide_legend(override.aes = list(size = 8))) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", hjust = .1), panel.background = element_blank(), 
+        legend.title=element_blank())
+
+# ---------------------------------------------------#
+# Specifying Lincoln data via zipcodes
+# ---------------------------------------------------#
+
+SC_Lincoln_data <- SC_Data[(SC_Data$zip == "68504" | 
+                            SC_Data$zip ==  "68512" |
+                            SC_Data$zip == "68510.1" | 
+                            SC_Data$zip == "68510.2" |
+                            SC_Data$zip == "68510" |
+                            SC_Data$zip == "68507" | 
+                            SC_Data$zip == "68506" |
+                            SC_Data$zip == "68803"),]
+
+# ---------------------------------------------------#
+# Lincoln data scatterplot of high parental SES & student volunteering rate
+# ---------------------------------------------------#
+
+ggplot(SC_Lincoln_data, aes(x = ec_high_parent_ses_hs, y = volunteering_rate_hs)) + 
+  geom_point(position = "jitter") +
+  labs(x = "Share of High Parental SES (%)", y = "Volunteering Rate of Students (%)") + 
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "#2E5A88") +
+  geom_text(aes(label = as.character(high_school_name)), hjust = 0, vjust = 1.35) +
+  expand_limits(x = c(1, 1.6)) +
+  geom_textvline(label = "National Average", xintercept = xavg, linetype = "dotted", alpha = .55, size = 5.5) +
+  geom_texthline(label = "National Average", yintercept = yavg, linetype = "dotted", alpha = .55, size = 5.5) +
+  ggtitle("Figure 2. Scatterplot of High Parental SES and Volunteering, Local Data") +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5), panel.background = element_blank())
+```
+
+|          Share of high parental SES is defined as: two times the share of high-parental-SES friends (who attended the same school within three birth cohorts of the individual) among high-parental-SES individuals, averaged over all high parental-SES individuals in the school. "High SES" is quantified as being above median income.
+
+```{r, eval = T}
+# ---------------------------------------------------#
+# Sandbox - doing some "extras" with data out of personal interests
+# ---------------------------------------------------#
+
+filter(SC_Data, ec_high_parent_ses_hs == max(ec_high_parent_ses_hs, na.rm = T))
+filter(SC_Data, ec_high_parent_ses_hs == min(ec_high_parent_ses_hs, na.rm = T))
+
+filter(SC_Data, volunteering_rate_hs == max(volunteering_rate_hs, na.rm = T))
+filter(SC_Data, volunteering_rate_hs == min(volunteering_rate_hs, na.rm = T))
+
+NE_Data <- filter(SC_Data, color == 1)
+filter(NE_Data, ec_high_parent_ses_hs == max(ec_high_parent_ses_hs, na.rm = T))
+filter(NE_Data, volunteering_rate_hs == max(volunteering_rate_hs, na.rm = T))
+```

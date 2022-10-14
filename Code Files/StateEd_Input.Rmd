@@ -1,0 +1,217 @@
+---
+title: "State Education Summary Report for `r params$State`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  prettydoc::html_pretty:
+    theme: tactile
+params: 
+  State: "AK"
+---
+```{r, include = F}
+knitr::opts_chunk$set(echo = TRUE)
+
+# ---------------------------------------------------#
+# Package loading and data import
+# ---------------------------------------------------#
+
+library(pacman)
+p_load("ggplot2", "kableExtra", "dplyr", "readr", "stats", "readxl", "geomtextpath", "labelled", "patchwork", install = T)
+
+StateEd_Data <- read_excel("/Users/jayjeffries/Desktop/R Resources/Parameterized Reporting/State Ed Example/HSDistrict_Data.xlsx")
+
+State_ACT_Data <- read_excel("/Users/jayjeffries/Desktop/R Resources/Parameterized Reporting/State Ed Example/State_ACT.xls")
+
+# ---------------------------------------------------#
+# Filtering data by parameters
+# ---------------------------------------------------#
+
+HS_State <- params$State
+
+StateHS_Data <- StateEd_Data |>
+  select("SCH_NAME", "CITY", "STATE", "CHARTER", "MAGNET", "TITLE_1_WIDE", "STUDENTS", "TEACHERS", "RATIO") |>
+  filter(STATE == HS_State)
+
+# bar chart data (for later)
+barch_data <- State_ACT_Data |>
+  filter(State == params$State | State_Full == "United States")
+
+# ---------------------------------------------------#
+# Re-labeling variables to proper names
+# ---------------------------------------------------#
+
+var_label(StateHS_Data$SCH_NAME) <- "School Name"
+var_label(StateHS_Data$CITY) <- "City"
+var_label(StateHS_Data$CHARTER) <- "Charter"
+var_label(StateHS_Data$MAGNET) <- "Magnet"
+var_label(StateHS_Data$TITLE_1_WIDE) <- "Title 1 School"
+var_label(StateHS_Data$STUDENTS) <- "Number of Students"
+var_label(StateHS_Data$TEACHERS) <- "Number of Teachers"
+var_label(StateHS_Data$RATIO) <- "Student-Teacher Ratio"
+
+# ---------------------------------------------------#
+# Labeling `r` objects for in-text use
+# ---------------------------------------------------#
+
+state_name <- barch_data$State_Full[2]
+teachers <- round(mean(StateEd_Data$TEACHERS, na.rm = T),0)
+students <- round(mean(StateEd_Data$STUDENTS, na.rm = T),0)
+ratio <- round(mean(StateEd_Data$RATIO, na.rm = T),0)
+```
+
+## Overview
+
+Using high school and ACT data from the [National Center for Educational Statistics](https://nces.ed.gov/ccd/schoolsearch/) (*NCES*), a report was created to describe the state of `r state_name`'s education systems. 
+
+* A table (Table 1) of descriptive high-school statistics for `r state_name`. These can be compared with the following national averages:
+  * The average number of teachers reported in U.S. high schools is **`r teachers` teachers**.
+  * The average number of students reported in U.S. high schools is **`r students` students**.
+  * The average student:teacher ratio reported in U.S. high schools is **`r ratio` students to teachers**.
+* Charts (Figures 1-5) of `r state_name`'s ACT scores.
+
+## State Education Descriptives
+
+```{r, echo = F, fig.align = 'c'}
+# ---------------------------------------------------#
+# Defining the contents of the summary table
+# ---------------------------------------------------#
+
+SummaryTable1 = StateHS_Data %>%
+  summarise( 
+    "Public Schools" = sum(StateHS_Data$CHARTER == "No" & StateHS_Data$MAGNET == "No", na.rm = T),
+    "Charter Schools" = sum(StateHS_Data$CHARTER == "Yes", na.rm = T),
+    "Magnet Schools" = sum(StateHS_Data$MAGNET == "Yes", na.rm = T),
+    "Title 1 Schools" = sum(StateHS_Data$TITLE_1_WIDE == "Yes", na.rm = T),
+    " " = " ",
+    "  " = "  ",
+    "Students" = round(mean(StateHS_Data$STUDENTS, na.rm = T), 0),
+    "Teachers" = round(mean(StateHS_Data$TEACHERS, na.rm = T), 0),
+    "Student-Teacher Ratio" = round(mean(StateHS_Data$RATIO, na.rm = T), 0)
+  )
+# ---------------------------------------------------#
+# Designing and organizing table
+# ---------------------------------------------------#
+
+
+Summary1 <- kbl(SummaryTable1, caption = "Table 1. State Education Summary Statistics", align = "c") %>%
+  add_header_above(c("School Types (Counts)" = 4, 
+                     " " = 2,
+                     "School Demographics (Means)" = 3)) %>%
+  row_spec(0, bold = TRUE) %>% 
+  kable_paper("hover", font_size = 16, full_width = TRUE) %>%
+  kable_styling(html_font = "Cambria", row_label_position = "c") %>%
+  row_spec(0, bold = T, color = "white", background = "#acacac")
+
+# ---------------------------------------------------#
+# Printing the summary tables
+# ---------------------------------------------------#
+
+Summary1
+```
+
+---
+
+## State ACT Descriptive Plots
+
+```{r, echo = F, fig.align='center'}
+# ---------------------------------------------------#
+# Formatting and designing each bar chart
+# ---------------------------------------------------#
+
+# Composite Score - 2019 
+a = barch_data %>%
+  arrange(CompScore_2019) %>%
+  mutate(State = factor(State, levels = State)) %>%   
+  ggplot(aes(x = State, y = CompScore_2019)) +
+  geom_segment(aes(xend = State , yend = 0), lwd = 1.5, color = "gray") +
+  scale_y_continuous(limits = c(0, 36), breaks = c(0, 12, 24, 36)) +
+  geom_text(aes(label = CompScore_2019), vjust = 3) +
+  geom_point(size = 6, color = "orange") +
+  labs(x = "State", y = "Average ACT Composite Score", 
+       title = "Figure 1. Composite Score Comparison Chart") +
+  coord_flip() +
+  theme_light() +
+  theme(plot.title = element_text(size = 16, face = "bold"), panel.background = element_blank(),
+        axis.title.x = element_text(size=14),    
+        axis.title.y = element_text(size=14),
+        axis.text = element_text(face="bold", size = 12))
+  
+# English Score - 2019
+b = barch_data %>%
+  arrange(EngScore_2019) %>%    
+  mutate(State = factor(State, levels = State)) %>% 
+  ggplot(aes(x = State, y = EngScore_2019)) +
+  geom_segment(aes(xend = State , yend = 0), lwd = 1.5, color = "gray") +
+  scale_y_continuous(limits = c(0, 36), breaks = c(0, 12, 24, 36)) +
+  geom_text(aes(label = EngScore_2019), vjust = 3) +
+  geom_point(size = 6, color = "red") +
+  labs(x = "State", y = "Average English Score", 
+       title = "Figure 2. English Score") +
+  coord_flip() +
+  theme_light() +
+  theme(plot.title = element_text(size = 14, face = "bold"), panel.background = element_blank(),
+        axis.title.x = element_text(size=12),    
+        axis.title.y = element_text(size=12),
+        axis.text = element_text(face="bold", size = 10))
+
+# Math Score - 2019
+c = barch_data %>%
+  arrange(MathScore_2019) %>% 
+  mutate(State = factor(State, levels = State)) %>% 
+  ggplot(aes(x = State, y = MathScore_2019)) +
+  geom_segment(aes(xend = State , yend = 0), lwd = 1.5, color = "gray") +
+  scale_y_continuous(limits = c(0, 36), breaks = c(0, 12, 24, 36)) +
+  geom_text(aes(label = MathScore_2019), vjust = 3) +
+  geom_point(size = 6, color = "blue") +
+  labs(x = "State", y = "Average Math Score", 
+       title = "Figure 3. Math Score") +
+  coord_flip() +
+  theme_light() +
+  theme(plot.title = element_text(size = 14, face = "bold"), panel.background = element_blank(),
+        axis.title.x = element_text(size=12),    
+        axis.title.y = element_text(size=12),
+        axis.text = element_text(face="bold", size = 10))
+
+# Science Score - 2019
+d = barch_data %>%
+  arrange(ScienceScore_2019) %>% 
+  mutate(State = factor(State, levels = State)) %>% 
+  ggplot(aes(x = State, y = ScienceScore_2019)) +
+  geom_segment(aes(xend = State , yend = 0), lwd = 1.5, color = "gray") +
+  scale_y_continuous(limits = c(0, 36), breaks = c(0, 12, 24, 36)) +
+  geom_text(aes(label = ScienceScore_2019), vjust = 3) +
+  geom_point(size = 6, color = "darkgreen") +
+  labs(x = "State", y = "Average Science Score", 
+       title = "Figure 4. Science Score") +
+  coord_flip() +
+  theme_light() +
+  theme(plot.title = element_text(size = 14, face = "bold"), panel.background = element_blank(),
+        axis.title.x = element_text(size=12),    
+        axis.title.y = element_text(size=12),
+        axis.text = element_text(face="bold", size = 10))
+
+# Reading Score - 2019
+e = barch_data %>%
+  arrange(ReadScore_2019) %>% 
+  mutate(State = factor(State, levels = State)) %>% 
+  ggplot(aes(x = State, y = ReadScore_2019)) +
+  geom_segment(aes(xend = State , yend = 0), lwd = 1.5, color = "gray") +
+  scale_y_continuous(limits = c(0, 36), breaks = c(0, 12, 24, 36)) +
+  geom_text(aes(label = ReadScore_2019), vjust = 3) +
+  geom_point(size = 6, color = "yellow") +
+  labs(x = "State", y = "Average Reading Score", 
+       title = "Figure 5. Reading Score",
+       caption = "Data derives from the 2019 ACT cohort.") +
+  coord_flip() +
+  theme_light() +
+  theme(plot.title = element_text(size = 14, face = "bold"), panel.background = element_blank(),
+        axis.title.x = element_text(size=12),    
+        axis.title.y = element_text(size=12),
+        axis.text = element_text(face="bold", size = 10))
+
+# ---------------------------------------------------#
+# Printing the summary tables and organizing across page
+# ---------------------------------------------------#
+
+a
+(b | c) / (d | e)
+```

@@ -1,0 +1,105 @@
+---
+title: "Grads On The Go Report for <br /> `r params$NE_institutions`"
+params: 
+  NE_institutions: "University of Nebraska at Kearney"
+output: 
+  html_document:
+    theme: cerulean
+---
+
+<style type="text/css">
+h1.title {
+  font-size: 38px;
+  text-align: center;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# ---------------------------------------------------#
+# Package loading and data import
+# ---------------------------------------------------#
+
+library(pacman)
+p_load("dplyr", "haven", "stats", "kableExtra", install = T)
+
+GOTG_Data <- read_dta('/Users/jayjeffries/Desktop/R Resources/Parameterized Reporting/InstitutionFile.dta')
+
+# ---------------------------------------------------#
+# Filtering data by parameters
+# ---------------------------------------------------#
+
+GOTG_report_data <- GOTG_Data %>%
+  filter(instnm == params$NE_institutions)
+
+GOTG_report_data <- as.data.frame(GOTG_report_data)
+GOTG_report_data$npt4_avg <- format(GOTG_report_data$npt4_avg, scientific=F)
+```
+
+|           This report is made up of data from *Grads on the Go* (2011-2018) which measures college-specific labor markets for graduates through use of *LinkedIn* account information along with *Integrated Postsecondary Education Data System* (IPEDS) and the *College Scorecard* data from the U.S. Department of Education. This summary report is for the `r params$NE_institutions`. 
+
+```{r, echo = F}
+# ---------------------------------------------------#
+# Defining the contents of the three summary tables
+# ---------------------------------------------------#
+
+SummaryTable1 = GOTG_report_data %>%
+  summarise( 
+    "% Alums in State" = round(GOTG_report_data[, 6], 2),
+    "Alums Avg Miles from Institution" = round(GOTG_report_data[, 9], 2),
+    "Avg Hourly Wage of BA Grad" = round(GOTG_report_data[, 10], 2),
+    "Associates Degrees Completed" = round(GOTG_report_data[, 22], 2),
+    "Bachelor's Degrees Completed" = round(GOTG_report_data[, 23], 2),
+    "Master's Degrees Completed" = round(GOTG_report_data[, 24], 2),
+    "Doctorate Degrees Completed" = round(GOTG_report_data[, 26], 2),
+  )
+
+SummaryTable2 = GOTG_report_data %>%
+  summarise( 
+    "Avg Full-Time Enrollment (FTE)" = round(GOTG_report_data[19], 0),
+    "Black Undergrads" = paste("%", round(GOTG_report_data[, 33], 2)*100),
+    "Hispanic Undergrads" = paste("%", round(GOTG_report_data[, 34], 2)*100),
+    "Asian Undergrads" = paste("%", round(GOTG_report_data[, 35], 2)*100),
+    "Women Undergrads" = paste("%", round(GOTG_report_data[, 36], 2)*100)
+  )
+
+SummaryTable3 = GOTG_report_data %>%
+  summarise( 
+    "Avg Net Cost of Attendance" = paste("$", GOTG_report_data$npt4_avg),
+    "Undergrads with Federal Loans" = paste("%", round(GOTG_report_data$pctfloan_avg, 2)*100),
+    "Undergrads with Pell Grants" = paste("%", round(GOTG_report_data$pctpell_avg, 2)*100),
+    "Avg Instructional Expenditure per FTE" = paste("$", round(GOTG_report_data$inexpfte_avg, 2)),
+  )
+
+# ---------------------------------------------------#
+# Designing and organizing tables for each summary table
+# ---------------------------------------------------#
+
+Summary1 <- kbl(SummaryTable1, caption = "Table 1. Alumni Summary Statistics", align = 'c') %>%
+  add_header_above(c("Alum Statistics" = 3, 
+                     "Degree Statistics" = 4)) %>%
+  row_spec(0, bold = TRUE, hline_after = T) %>% 
+  kable_paper("hover", font_size = 13, full_width = TRUE) %>%
+  kable_styling(html_font = "serif", row_label_position = "c")
+
+Summary2 <- kbl(SummaryTable2, caption = "Table 2. Institution Demographics", align = 'c') %>%
+  add_header_above(c("Student Demographics" = 5)) %>%
+  row_spec(0, bold = TRUE, hline_after = T) %>% 
+  kable_paper("hover", font_size = 13, full_width = TRUE) %>%
+  kable_styling(html_font = "serif", row_label_position = "c")
+
+Summary3 <- kbl(SummaryTable3, caption = "Table 3. Financial Demographics", align = 'c') %>%
+  add_header_above(c("Price" = 1, "Student Funding" = 2, "Expenditures" = 1)) %>%
+  row_spec(0, bold = TRUE, hline_after = T) %>% 
+  kable_paper("hover", font_size = 13, full_width = TRUE) %>%
+  kable_styling(html_font = "serif", row_label_position = "c")
+
+# ---------------------------------------------------#
+# Printing all 3 summary tables
+# ---------------------------------------------------#
+
+Summary1
+Summary2
+Summary3
+```
