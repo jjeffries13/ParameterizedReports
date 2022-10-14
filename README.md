@@ -5,7 +5,7 @@
 ---------------------
   
  * Introduction
- * [Slides](https://github.com/jjeffries13/ParameterizedReports/tree/main/Slides)
+ * [Slides](https://github.com/jjeffries13/ParameterizedReports/blob/main/Slides/Jeffries_ParamReports.pdf)
  * Public Datasets
    * [Social Capital Atlas Report Data](https://github.com/jjeffries13/ParameterizedReports/blob/main/Data/social_capital_high_school.csv)
       * [Link](https://dataforgood.facebook.com/dfg/tools/social-capital-atlas#accessdata) to original source
