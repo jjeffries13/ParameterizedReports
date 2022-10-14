@@ -23,6 +23,9 @@
     * State Education Markdown File [(StateEd.Rmd)](https://github.com/jjeffries13/ParameterizedReports/blob/main/Code%20Files/StateEd_Input.Rmd)
     * State Education Render Script [(StateEd.R)](https://github.com/jjeffries13/ParameterizedReports/blob/main/Code%20Files/StateEd_Render.R)
  * Output Files
+    * [Social Capital](https://github.com/jjeffries13/ParameterizedReports/tree/main/Output%20Files/Social%20Capital)
+    * [Grads on the Go](https://github.com/jjeffries13/ParameterizedReports/tree/main/Output%20Files/GOTG)
+    * [State Education](https://github.com/jjeffries13/ParameterizedReports/upload/main/Output%20Files/State%20Education)
 
 ---------------------
 
